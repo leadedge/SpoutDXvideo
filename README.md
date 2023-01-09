@@ -8,20 +8,20 @@ send to Spout and display using Windows functions.
 The project uses the SpoutDX support class built as a library for x64.
 Only one sending function is used, "SendImage", which handles everything. 
 
-The original purpose was to be an example for the SpoutDX class
-but it is unsuitable due to FFmpeg dependency.
+The original purpose was to be an example for SpoutDX built as a dll.
+But it proved to be unsuitable due to FFmpeg dependency.
 
-However, it may be useful for reference :
-    o Using the SpoutDX library and dll.
-    o Spout "SendImage" is the only sending function.
-    o Command line processing.
-    o FFprobe to read video file details.
-    o FFmpeg with a pipe to decode video frames.
-    o Windows application drag and drop.
-	o Drag and drop with elevated UAC.
-    o Display of video frames (see WM_PAINT).
-	o Draw and position text.
-	o Fps control using Spout "HoldFps"
+However, it remains useful for reference :\
+&nbsp;&nbsp;&nbsp;&nbsp;o Using the SpoutDX library and dll.\
+&nbsp;&nbsp;&nbsp;&nbsp;o Spout "SendImage" is the only sending function.\
+&nbsp;&nbsp;&nbsp;&nbsp;o Command line processing.\
+&nbsp;&nbsp;&nbsp;&nbsp;o FFprobe to read video file details.\
+&nbsp;&nbsp;&nbsp;&nbsp;o FFmpeg with a pipe to decode video frames.\
+&nbsp;&nbsp;&nbsp;&nbsp;o Windows application drag and drop.\
+&nbsp;&nbsp;&nbsp;&nbsp;o Drag and drop with elevated UAC.\
+&nbsp;&nbsp;&nbsp;&nbsp;o Display of video frames (see WM_PAINT).\
+&nbsp;&nbsp;&nbsp;&nbsp;o Draw and position text.\
+&nbsp;&nbsp;&nbsp;&nbsp;o Fps control using Spout "HoldFps".
 
 After building, the "DATA" folder and contents must be copied to the
 executable folder (e.g. "x64\Release\" or "x64\Debug\) or wherever you 
@@ -38,8 +38,8 @@ Spout is video only - no audio is produced.
 FFmpeg.exe and FFprobe.exe are required.
 * Find the example Binaries folder.
 * Go to https://github.com/GyanD/codexffmpeg/releases
-* Choose the "Essentials" build. e.g. ffmpeg-5.1.2-essentials_build.zip and download the archive.
-* Unzip the archive and copy bin\FFmpeg.exe and bin\FFprobe.exe to : &nbsp;DATA\FFMPEG
+* Choose the "Essentials" build. e.g. "ffmpeg-5.1.2-essentials_build.zip" and download the archive.
+* Unzip the archive and copy "bin\FFmpeg.exe" and "bin\FFprobe.exe" to : &nbsp;DATA\FFMPEG
 * Copy the entire DATA folder to the folder containing the executable file.\
 This may be, for example, "..\x64\Release".
 
