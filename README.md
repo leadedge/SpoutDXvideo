@@ -24,11 +24,12 @@ However, it remains useful for reference :\
 &nbsp;&nbsp;&nbsp;&nbsp;o Fps control using Spout "HoldFps".
 
 After building, the "DATA" folder and contents must be copied to the
-executable folder (e.g. "x64\Release\" or "x64\Debug\) or wherever you 
-copy "SpoutDXvideo.exe". SpoutDX.dll (in "SpoutDX\libs\") must also
-be copied to the same folder.
+executable folder (e.g. "x64\Release\" or "x64\Debug\") or wherever you 
+copy "SpoutDXvideo.exe". 
 
-Details for command line execution can be found in "\DATA\Scripts\readme.md"
+SpoutDX.dll (in "SpoutDX\libs\") must also be copied to the same folder containing the executable file.
+
+Details for command line execution can be found in "\DATA\Scripts\readme.md".\
 For a quick example, double click "aa-start.vbs".
 
 Open a Spout receiver to see the output.
