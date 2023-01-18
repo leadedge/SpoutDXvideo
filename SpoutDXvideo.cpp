@@ -42,11 +42,11 @@
     o FFprobe to read video file details.
     o FFmpeg with a pipe to decode video frames.
     o Windows application drag and drop.
-	o Drag and drop with elevated UAC.
+    o Drag and drop with elevated UAC.
     o Display of video frames (see WM_PAINT).
-	o Draw and position text.
-	o Double buffering to avoid text flicker.
-	o Fps control using Spout "HoldFps"
+    o Draw and position text.
+    o Double buffering to avoid text flicker.
+    o Fps control using Spout "HoldFps"
     
    FFmpeg loads a video and decodes individual frames to a pipe.
    Display in WM_PAINT and Spout SendImage.
