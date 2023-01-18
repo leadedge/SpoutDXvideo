@@ -101,6 +101,7 @@ WCHAR szWindowClass[MAX_LOADSTRING]={}; // the main window class name
 
 spoutDX sender;                         // Sending object
 HWND g_hWnd = NULL;                     // Window handle
+HMENU g_hMenu = NULL;                   // Menu handle
 unsigned char *g_pixelBuffer = nullptr; // RGBA pixel buffer
 unsigned char g_SenderName[256]={};     // Sender name
 unsigned int  g_SenderWidth = 1280;     // Sender width (video width)
@@ -111,6 +112,22 @@ std::string g_exePath;                  // Executable location
 std::string g_ffmpegPath;               // FFmpeg location
 std::string g_input;                    // Input string to FFmpeg
 FILE *g_pipein = nullptr;               // Pipe for FFmpeg
+
+// For Windows proc callback
+bool bShowInfo = true;                  // Show on-screen info
+bool bTopmost = false;                  // Show topmost
+bool bFullscreen = false;               // Full screen
+
+// Globals for full screen
+HWND hWndForeground = NULL;             // Current foreground window
+RECT windowRect;                        // Render window rectangle
+RECT clientRect;                        // Render window client rectangle
+LONG_PTR dwStyle = NULL;                // Original window style
+int nonFullScreenX = 0;                 // Original window X position
+int nonFullScreenY = 0;                 // Original window Y position
+unsigned int AddX, AddY = 0;            // Adjustment to client rect for reset of window size
+
+
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -123,6 +140,8 @@ bool OpenVideo(std::string filePath); // Open a video with FFmpeg
 bool ffprobe(std::string filePath); // Get movie file information
 void ShowSenderInfo(HDC hdc); // Show sender information on screen
 void DrawString(std::string str, HDC hdc, COLORREF col, int xpos, int ypos); // Draw text
+void doFullScreen(bool bFull); // Fullscreen display
+void doTopmost(bool bTop); // Topmost dispay
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -156,8 +175,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	//
 	// Command line
 	//
-	// A video file name can be in "DATA\Scripts\aa-videoname.bat"
-	// If the file is found, the appication window starts minimized.
+	// Details for command line execution can be found in "\DATA\Scripts\readme.md".
+	// For a quick example, double click "aa-start.vbs".
 	//
 	std::string videoname; // The name in the batch file
 	std::string videopath; // The full video path
@@ -538,6 +557,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    //
 
    g_hWnd = hWnd;
+   g_hMenu = GetMenu(g_hWnd); // Used for full screen
    DragAcceptFiles(g_hWnd, TRUE);
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
@@ -574,12 +594,52 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				case IDM_EXIT:
 					DestroyWindow(hWnd);
 					break;
-
+				case IDM_TOPMOST:
+					bTopmost = !bTopmost;
+					doTopmost(bTopmost);
+					if (bTopmost)
+						CheckMenuItem(g_hMenu, IDM_TOPMOST, MF_BYCOMMAND | MF_CHECKED);
+					else
+						CheckMenuItem(g_hMenu, IDM_TOPMOST, MF_BYCOMMAND | MF_UNCHECKED);
+					break;
+				case IDM_FULLSCREEN:
+					bFullscreen = true;
+					doFullScreen(bFullscreen);
+					break;
 				default:
 					return DefWindowProc(hWnd, message, wParam, lParam);
             }
         }
         break;
+
+		case WM_KEYUP:
+		{
+			// Don't use key down in case of repeats
+			switch (wParam) {
+				case VK_ESCAPE:
+					// Console
+					printf("VK_ESCAPE\n");
+					if (bFullscreen) {
+						bFullscreen = false;
+						doFullScreen(bFullscreen);
+					}
+					break;
+				// 0x46 F
+				case 0x46:
+					bFullscreen = !bFullscreen;
+					doFullScreen(bFullscreen);
+					break;
+				// 0x20 SPACEBAR
+				case 0x20:
+					bShowInfo = !bShowInfo;
+					break;
+				default:
+					break;
+			}
+			break;
+
+		}
+		break;
 
 		case WM_DROPFILES:
 			if (DragQueryFileA((HDROP)wParam, 0xffffffff, szName, 256) > 0) {
@@ -610,15 +670,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					// No data
 					//
 					// Inform drag and drop at screen centre
-					std::string str = "DRAG AND DROP VIDEOS HERE";
-					// Get the width of the string
-					SIZE Size;
-					GetTextExtentPoint32A(hdc, str.c_str(), (int)str.length(), (LPSIZE)&Size);
-					// Center the string in the client area
-					int xpos = (dr.right-dr.left)/2 - Size.cx/2;
-					int ypos = (dr.bottom-dr.top)/2 - 30;
-					// White text (can be any colour (00 BB GG RR) hex)
-					DrawString(str, hdc, 0x00FFFFFF, xpos, ypos);
+					if (!bFullscreen) {
+						std::string str = "DRAG AND DROP VIDEOS HERE";
+						// Get the width of the string
+						SIZE Size;
+						GetTextExtentPoint32A(hdc, str.c_str(), (int)str.length(), (LPSIZE)&Size);
+						// Center the string in the client area
+						int xpos = (dr.right-dr.left)/2 - Size.cx/2;
+						int ypos = (dr.bottom-dr.top)/2 - 30;
+						// White text (can be any colour (00 BB GG RR) hex)
+						DrawString(str, hdc, 0x00FFFFFF, xpos, ypos);
+					}
 				}
 				else {
 					//
@@ -645,7 +707,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 						&bmi, DIB_RGB_COLORS, SRCCOPY);
 
 					// Draw the sender information text
-					ShowSenderInfo(hdcMem);
+					// Unless full screen or no show by space bar
+					if (bShowInfo && !bFullscreen)
+						ShowSenderInfo(hdcMem);
 
 					// Copy the double buffer to screen
 					BitBlt(hdc, 0, 0, (dr.right-dr.left), (dr.bottom-dr.top), hdcMem, 0, 0, SRCCOPY);
@@ -692,6 +756,10 @@ void ShowSenderInfo(HDC hdc)
 	// e.g. red = 0x000000FF
 	DrawString(str, hdc, 0x00FFFFFF, 20, 20);
 
+	str = "f - fullscreen : Space - hide info";
+	DrawString(str, hdc, 0x00FFFFFF, 20, 40);
+
+
 }
 
 void DrawString(std::string str, HDC hdc, COLORREF col, int xpos, int ypos)
@@ -710,6 +778,128 @@ void DrawString(std::string str, HDC hdc, COLORREF col, int xpos, int ypos)
 		SelectObject(hdc, hOldFont);
 	}
 } // end text draw
+
+
+//--------------------------------------------------------------
+void doFullScreen(bool bFullscreen)
+{
+	RECT rectTaskBar = {};
+	HWND hWndTaskBar = NULL;
+	HWND hWndMode = NULL;
+
+	if (bFullscreen) {
+
+		//
+		// Set full screen
+		//
+
+		// Get the current top window
+		hWndForeground = GetForegroundWindow();
+
+		// Preserve current window size values
+		GetWindowRect(g_hWnd, &windowRect);
+		GetClientRect(g_hWnd, &clientRect);
+
+		// Get the client/window adjustment values
+		AddX = (windowRect.right - windowRect.left) - (clientRect.right - clientRect.left);
+		AddY = (windowRect.bottom - windowRect.top) - (clientRect.bottom - clientRect.top);
+
+		// Get current client window size for return
+		nonFullScreenX = (clientRect.right - clientRect.left);
+		nonFullScreenY = (clientRect.bottom - clientRect.top);
+
+		// Remove caption, borders etc.
+		dwStyle = GetWindowLongPtrA(g_hWnd, GWL_STYLE);
+		SetWindowLongPtrA(g_hWnd, GWL_STYLE, WS_VISIBLE); // no other styles but visible
+
+		// Remove the menu
+		SetMenu(g_hWnd, NULL);
+
+		// Get the taskbar window handle
+		hWndTaskBar = FindWindowA("Shell_TrayWnd", "");
+		GetWindowRect(g_hWnd, &rectTaskBar);
+
+		// Put the taskbar lowest Z order
+		SetWindowPos(hWndTaskBar, HWND_NOTOPMOST, 0, 0, (rectTaskBar.right - rectTaskBar.left), (rectTaskBar.bottom - rectTaskBar.top), SWP_NOMOVE | SWP_NOSIZE);
+
+		// Allow for multiple monitors
+		HMONITOR monitor = MonitorFromWindow(g_hWnd, MONITOR_DEFAULTTOPRIMARY);
+		MONITORINFO mi;
+		mi.cbSize = sizeof(mi);
+		GetMonitorInfoA(monitor, &mi);
+		int x = (int)mi.rcMonitor.left;
+		int y = (int)mi.rcMonitor.top;
+		int w = (int)(mi.rcMonitor.right - mi.rcMonitor.left); // rcMonitor dimensions are LONG
+		int h = (int)(mi.rcMonitor.bottom - mi.rcMonitor.top);
+
+		// Noted slowdown ~28fps with AMD graphics with one SetWindowPos
+		// and freeze of keystrokes if two. Increase height by 1 for SetWindowPos
+		// seems to fix it ! ???
+		SetWindowPos(g_hWnd, HWND_TOP, x, y, w, h+1, SWP_SHOWWINDOW);
+		ShowCursor(FALSE);
+
+		// Necessary to detect keys
+		SetFocus(g_hWnd);
+
+	} // endif bFullscreen
+	else {
+
+		//
+		// Exit full screen
+		//
+
+		// Restore original style
+		SetWindowLongPtrA(g_hWnd, GWL_STYLE, dwStyle);
+
+		// Restore the menu
+		SetMenu(g_hWnd, g_hMenu);
+
+		// Restore topmost state
+		if (bTopmost)
+			hWndMode = HWND_TOPMOST;
+		else
+			hWndMode = HWND_TOP;
+
+		// Restore our window
+		SetWindowPos(g_hWnd, hWndMode, windowRect.left, windowRect.top, nonFullScreenX + AddX, nonFullScreenY + AddY, SWP_SHOWWINDOW);
+
+		// Reset the window that was top before - could be ours
+		if (GetWindowLong(hWndForeground, GWL_EXSTYLE) & WS_EX_TOPMOST)
+			SetWindowPos(hWndForeground, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+		else
+			SetWindowPos(hWndForeground, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+
+		DrawMenuBar(g_hWnd);
+
+		// Show cursor for all modes
+		ShowCursor(TRUE);
+		SetFocus(g_hWnd);
+
+	} // endif not bFullscreen
+
+}
+
+
+//--------------------------------------------------------------
+void doTopmost(bool bTop)
+{
+	if (bTop) {
+		// Get the current top window for return
+		hWndForeground = GetForegroundWindow();
+		// Set this window topmost
+		SetWindowPos(g_hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+		ShowWindow(g_hWnd, SW_SHOW);
+	}
+	else {
+		SetWindowPos(g_hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+		ShowWindow(g_hWnd, SW_SHOW);
+		// Reset the window that was topmost before
+		if (GetWindowLong(hWndForeground, GWL_EXSTYLE) & WS_EX_TOPMOST)
+			SetWindowPos(hWndForeground, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+		else
+			SetWindowPos(hWndForeground, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+	}
+} // end doTopmost
 
 
 

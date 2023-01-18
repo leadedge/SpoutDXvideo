@@ -9,16 +9,17 @@
 #define IDD_WINSPOUTDX_DIALOG	101
 #define IDD_ABOUTBOX			102
 
-#define IDM_ABOUT				110
-#define IDM_EXIT				111
+// TODO #define IDC_OPEN
+#define IDM_EXIT				200
+#define IDM_TOPMOST             201
+#define IDM_FULLSCREEN          202
+#define IDM_ABOUT				203
 
-// LJ DEBUG #define IDC_OPEN				120
+#define IDI_WINSPOUTDX			300
+#define IDC_WINSPOUTDX			301
 
-#define IDI_WINSPOUTDX			130
-#define IDC_WINSPOUTDX			131
-
-#define IDC_ABOUT_TEXT          201
-#define IDC_SPOUT_URL           202
+#define IDC_ABOUT_TEXT          400
+#define IDC_SPOUT_URL           401
 
 #define IDC_MYICON				2
 #ifndef IDC_STATIC
