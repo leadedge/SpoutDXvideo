@@ -156,8 +156,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	//
 	// Command line
 	//
-	// A video file name can be in "DATA\Scripts\aa-videoname.bat"
-	// If the file is found, the appication window starts minimized.
+	// Details for command line execution can be found in "\DATA\Scripts\readme.md".
+	// For a quick example, double click "aa-start.vbs".
 	//
 	std::string videoname; // The name in the batch file
 	std::string videopath; // The full video path
