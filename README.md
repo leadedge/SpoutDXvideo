@@ -8,8 +8,8 @@ send to Spout and display using Windows functions.
 The project uses the SpoutDX support class built as a library for x64.
 Only one sending function is used, "SendImage", which handles everything. 
 
-The original purpose was to be an example for SpoutDX built as a dll.
-But it proved to be unsuitable due to FFmpeg dependency.
+The original purpose was to be an example for SpoutDX built as a dll
+but proved to be unsuitable due to FFmpeg dependency.
 
 However, it remains useful for reference :\
 &nbsp;&nbsp;&nbsp;&nbsp;o Using the SpoutDX library and dll.\
@@ -21,13 +21,11 @@ However, it remains useful for reference :\
 &nbsp;&nbsp;&nbsp;&nbsp;o Drag and drop with elevated UAC.\
 &nbsp;&nbsp;&nbsp;&nbsp;o Display of video frames (see WM_PAINT).\
 &nbsp;&nbsp;&nbsp;&nbsp;o Draw and position text.\
+&nbsp;&nbsp;&nbsp;&nbsp;o Double buffering to avoid text flicker.\
 &nbsp;&nbsp;&nbsp;&nbsp;o Fps control using Spout "HoldFps".
 
-After building, the "DATA" folder and contents must be copied to the
-executable folder (e.g. "x64\Release\" or "x64\Debug\") or wherever you 
+After building, SpoutDX.dll (in "SpoutDX\libs\") and the the complete "DATA" folder and contents must be copied to the executable folder (e.g. "x64\Release\" or "x64\Debug\") or wherever you 
 copy "SpoutDXvideo.exe". 
-
-SpoutDX.dll (in "SpoutDX\libs\") must also be copied to the same folder containing the executable file.
 
 Details for command line execution can be found in "\DATA\Scripts\readme.md".\
 For a quick example, double click "aa-start.vbs".
